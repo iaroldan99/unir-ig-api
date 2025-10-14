@@ -98,7 +98,7 @@ unir-ig-api/
 ### 2️⃣ Clonar y Configurar
 
 ```bash
-git clone https://github.com/iaroldan99/unir-ig-api.git
+git clone https://github.com/TU_USUARIO/unir-ig-api.git
 cd unir-ig-api
 
 # Copiar variables de entorno
@@ -514,5 +514,5 @@ MIT License - Ver [LICENSE](LICENSE) para más detalles
 
 **Desarrollado con ❤️ por el equipo de UNIR**
 
-Para dudas o soporte: [GitHub Issues](https://github.com/iaroldan99/unir-ig-api/issues)
+Para dudas o soporte: [GitHub Issues](https://github.com/TU_USUARIO/unir-ig-api/issues)
 

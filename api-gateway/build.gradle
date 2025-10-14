@@ -14,6 +14,7 @@ dependencies {
     
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.postgresql:postgresql'
+    runtimeOnly 'com.h2database:h2'
     
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'

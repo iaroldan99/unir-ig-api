@@ -4,7 +4,7 @@
 - ✓ Repositorio Git inicializado
 - ✓ Commit inicial creado
 - ✓ Proyecto compilado exitosamente
-- ✓ Configurado con tu cuenta: iaroldan99 (iaroldan@uade.edu.ar)
+- ✓ Configurado con tu cuenta Git local
 
 ## 📝 Pasos para crear el repositorio en GitHub
 
@@ -23,10 +23,10 @@
 4. **En tu terminal, ejecuta estos comandos**:
 
 ```bash
-cd /Users/iroldan/Desktop/UADE/sem/unir-ig-api
+cd /path/to/unir-ig-api
 
 # Agregar remote origin
-git remote add origin https://github.com/iaroldan99/unir-ig-api.git
+git remote add origin https://github.com/TU_USUARIO/unir-ig-api.git
 
 # Renombrar rama a main (si es necesario)
 git branch -M main
@@ -45,8 +45,8 @@ brew install gh
 gh auth login
 
 # Crear repositorio y hacer push automáticamente
-cd /Users/iroldan/Desktop/UADE/sem/unir-ig-api
-gh repo create iaroldan99/unir-ig-api --public --source=. --remote=origin --push
+cd /path/to/unir-ig-api
+gh repo create TU_USUARIO/unir-ig-api --public --source=. --remote=origin --push
 ```
 
 ## 🔐 Autenticación
@@ -63,7 +63,7 @@ Si te pide credenciales al hacer push, tienes 2 opciones:
 ### Opción B: SSH
 ```bash
 # Generar SSH key
-ssh-keygen -t ed25519 -C "iaroldan@uade.edu.ar"
+ssh-keygen -t ed25519 -C "tu_email@ejemplo.com"
 
 # Agregar a ssh-agent
 eval "$(ssh-agent -s)"
@@ -74,7 +74,7 @@ cat ~/.ssh/id_ed25519.pub
 # Agrégala en: https://github.com/settings/ssh/new
 
 # Cambiar remote a SSH
-git remote set-url origin git@github.com:iaroldan99/unir-ig-api.git
+git remote set-url origin git@github.com:TU_USUARIO/unir-ig-api.git
 git push -u origin main
 ```
 
@@ -82,7 +82,7 @@ git push -u origin main
 
 Una vez que hayas hecho push exitoso, tu repositorio estará disponible en:
 
-**https://github.com/iaroldan99/unir-ig-api**
+**https://github.com/TU_USUARIO/unir-ig-api**
 
 ## 📋 Próximos Pasos
 

@@ -45,11 +45,11 @@ Tu proyecto ahora tiene un sistema completo de OAuth para Instagram Business + A
 Edita tu `.env`:
 
 ```bash
-cd /Users/iroldan/Desktop/UADE/sem/unir-ig-api
+cd /path/to/unir-ig-api
 cat >> .env << 'EOF'
 
 # Instagram OAuth (Business)
-INSTAGRAM_CLIENT_ID=813439077768151
+INSTAGRAM_CLIENT_ID=tu_app_id_de_meta
 INSTAGRAM_CLIENT_SECRET=tu_app_secret_de_meta
 INSTAGRAM_REDIRECT_URI=http://localhost:8080/auth/instagram/callback
 
@@ -58,7 +58,7 @@ EOF
 
 ### 2. Configurar Redirect URI en Meta
 
-1. Ve a https://developers.facebook.com/apps/813439077768151
+1. Ve a https://developers.facebook.com/apps/TU_APP_ID
 2. Settings → Basic
 3. En "App Domains" agrega: `localhost`
 4. Guarda cambios

@@ -136,14 +136,14 @@ kill $(cat api-gateway.pid) $(cat ig-service.pid)
 # Levantar de nuevo
 java -jar api-gateway/build/libs/api-gateway.jar \
   --spring.datasource.url=jdbc:postgresql://localhost:5432/inbox \
-  --spring.datasource.username=iroldan \
-  --spring.datasource.password= \
+  --spring.datasource.username=postgres \
+  --spring.datasource.password=postgres \
   > api-gateway.log 2>&1 &
 
 java -jar ig-service/build/libs/ig-service.jar \
   --spring.datasource.url=jdbc:postgresql://localhost:5432/inbox \
-  --spring.datasource.username=iroldan \
-  --spring.datasource.password= \
+  --spring.datasource.username=postgres \
+  --spring.datasource.password=postgres \
   --flyway.enabled=false \
   > ig-service.log 2>&1 &
 ```
@@ -214,7 +214,7 @@ GROUP BY direction, channel;
    ```
 
 3. **Configurar en Meta**:
-   - Ve a https://developers.facebook.com/apps/813439077768151/webhooks
+   - Ve a https://developers.facebook.com/apps/TU_APP_ID/webhooks
    - Agrega la URL de ngrok: `https://tu-ngrok.ngrok.io/webhooks/instagram`
    - Verify Token: `demo_verify_token_secreto`
    - Suscribirse al evento: `messages`
@@ -225,7 +225,7 @@ Para funcionalidad completa, asegúrate de tener en tu `.env`:
 
 ```env
 # Instagram OAuth (necesario para conectar cuentas)
-INSTAGRAM_CLIENT_ID=813439077768151
+INSTAGRAM_CLIENT_ID=tu_app_id_de_meta
 INSTAGRAM_CLIENT_SECRET=tu_app_secret_de_meta
 
 # Instagram Webhooks (necesario para recibir mensajes)

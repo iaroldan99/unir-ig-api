@@ -106,7 +106,7 @@ Deberías ver los datos de tu cuenta de Instagram.
 ### 3.1 Levantar tu Servicio Localmente
 
 ```bash
-cd /Users/iroldan/Desktop/UADE/sem/unir-ig-api
+cd /path/to/unir-ig-api
 
 # En una terminal - Levantar base de datos (si tienes Docker)
 docker compose up -d db
