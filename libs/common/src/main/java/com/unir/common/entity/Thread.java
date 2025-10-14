@@ -1,13 +1,24 @@
 package com.unir.common.entity;
 
-import com.unir.common.model.Channel;
-import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
+import com.unir.common.model.Channel;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "threads", uniqueConstraints = {
@@ -33,10 +44,21 @@ public class Thread {
     @Column(columnDefinition = "jsonb")
     private List<Participant> participants;
     
+    @Column(length = 500)
+    private String subject;
+    
     @Column(name = "last_message_at")
     private OffsetDateTime lastMessageAt;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
+    
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
     public Thread() {
+        this.createdAt = OffsetDateTime.now();
     }
 
     // Getters and Setters
@@ -86,6 +108,30 @@ public class Thread {
 
     public void setLastMessageAt(OffsetDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public static class Participant {

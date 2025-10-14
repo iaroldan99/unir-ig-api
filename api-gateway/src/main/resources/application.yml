@@ -18,9 +18,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:true}  # Habilitado por defecto, api-gateway ejecuta migraciones
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+instagram:
+  oauth:
+    client-id: ${INSTAGRAM_CLIENT_ID:813439077768151}
+    client-secret: ${INSTAGRAM_CLIENT_SECRET:}
+    redirect-uri: ${INSTAGRAM_REDIRECT_URI:http://localhost:8080/auth/instagram/callback}
 
 services:
   ig-service:

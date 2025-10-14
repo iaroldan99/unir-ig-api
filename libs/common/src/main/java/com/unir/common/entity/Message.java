@@ -1,14 +1,24 @@
 package com.unir.common.entity;
 
-import com.unir.common.model.Channel;
-import com.unir.common.model.Direction;
-import jakarta.persistence.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.unir.common.model.Channel;
+import com.unir.common.model.Direction;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "messages", uniqueConstraints = {
@@ -38,11 +48,26 @@ public class Message {
     @Column(columnDefinition = "jsonb")
     private Map<String, String> sender;
     
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private java.util.List<Map<String, String>> recipients;
+    
     @Column(name = "body_text", columnDefinition = "TEXT")
     private String bodyText;
     
+    @Column(name = "body_html", columnDefinition = "TEXT")
+    private String bodyHtml;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private java.util.List<Map<String, Object>> attachments;
+    
     @Column(length = 50)
     private String status;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> raw;
     
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -122,6 +147,38 @@ public class Message {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public java.util.List<Map<String, String>> getRecipients() {
+        return recipients;
+    }
+
+    public void setRecipients(java.util.List<Map<String, String>> recipients) {
+        this.recipients = recipients;
+    }
+
+    public String getBodyHtml() {
+        return bodyHtml;
+    }
+
+    public void setBodyHtml(String bodyHtml) {
+        this.bodyHtml = bodyHtml;
+    }
+
+    public java.util.List<Map<String, Object>> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(java.util.List<Map<String, Object>> attachments) {
+        this.attachments = attachments;
+    }
+
+    public Map<String, Object> getRaw() {
+        return raw;
+    }
+
+    public void setRaw(Map<String, Object> raw) {
+        this.raw = raw;
     }
 }
 

@@ -18,7 +18,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
   flyway:
-    enabled: true
+    enabled: ${FLYWAY_ENABLED:false}  # Desactivado por defecto, api-gateway maneja migraciones
     locations: classpath:db/migration
     baseline-on-migrate: true
 

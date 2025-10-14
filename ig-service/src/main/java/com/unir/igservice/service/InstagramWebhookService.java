@@ -1,21 +1,29 @@
 package com.unir.igservice.service;
 
-import com.unir.common.entity.Message;
-import com.unir.common.entity.Thread;
-import com.unir.common.model.Channel;
-import com.unir.common.model.Direction;
-import com.unir.igservice.dto.InstagramWebhookPayload;
-import com.unir.igservice.repository.MessageRepository;
-import com.unir.igservice.repository.ThreadRepository;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unir.common.entity.Message;
+import com.unir.common.entity.Thread;
+import com.unir.common.model.Channel;
+import com.unir.common.model.Direction;
+import com.unir.igservice.dto.InstagramWebhookPayload;
+import com.unir.igservice.repository.AccountRepository;
+import com.unir.igservice.repository.MessageRepository;
+import com.unir.igservice.repository.ThreadRepository;
 
 @Service
 public class InstagramWebhookService {
@@ -24,10 +32,17 @@ public class InstagramWebhookService {
     
     private final ThreadRepository threadRepository;
     private final MessageRepository messageRepository;
+    private final AccountRepository accountRepository;
+    private final ObjectMapper objectMapper;
 
-    public InstagramWebhookService(ThreadRepository threadRepository, MessageRepository messageRepository) {
+    public InstagramWebhookService(ThreadRepository threadRepository, 
+                                   MessageRepository messageRepository,
+                                   AccountRepository accountRepository,
+                                   ObjectMapper objectMapper) {
         this.threadRepository = threadRepository;
         this.messageRepository = messageRepository;
+        this.accountRepository = accountRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -49,6 +64,7 @@ public class InstagramWebhookService {
 
     private void processMessagingEvent(InstagramWebhookPayload.MessagingEvent event) {
         if (event.getMessage() == null) {
+            log.debug("Evento sin mensaje, saltando");
             return;
         }
 
@@ -56,8 +72,9 @@ public class InstagramWebhookService {
         String recipientId = event.getRecipient().getId();
         String externalThreadId = senderId; // Usar sender como thread ID
         
-        // Por simplicidad, usamos un accountId fijo. En producción buscarías por recipientId
-        UUID accountId = UUID.randomUUID(); // Aquí deberías buscar la cuenta por recipientId
+        // TODO: Buscar account por recipientId (que debería matchear IG_USER_ID)
+        // Por ahora usar accountId fijo o crear uno de prueba
+        UUID accountId = findOrCreateAccountId(recipientId);
         
         // Buscar o crear thread
         Thread thread = threadRepository.findByAccountIdAndExternalThreadId(accountId, externalThreadId)
@@ -71,6 +88,7 @@ public class InstagramWebhookService {
                     newThread.setParticipants(List.of(participant));
                     newThread.setLastMessageAt(OffsetDateTime.now());
                     
+                    log.info("Creando nuevo thread para sender: {}", senderId);
                     return threadRepository.save(newThread);
                 });
 
@@ -80,7 +98,7 @@ public class InstagramWebhookService {
                 thread.getId(), externalMessageId);
         
         if (existing.isPresent()) {
-            log.debug("Mensaje {} ya existe, saltando", externalMessageId);
+            log.debug("Mensaje {} ya existe (idempotente), saltando", externalMessageId);
             return;
         }
 
@@ -96,8 +114,25 @@ public class InstagramWebhookService {
         sender.put("name", "Instagram User");
         message.setSender(sender);
         
+        // Recipients (el recipient del evento, típicamente nuestra app)
+        List<Map<String, String>> recipients = new ArrayList<>();
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("id", recipientId);
+        recipient.put("name", "Me");
+        recipients.add(recipient);
+        message.setRecipients(recipients);
+        
         message.setBodyText(event.getMessage().getText());
         message.setStatus("received");
+        
+        // Guardar el payload completo en raw
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> rawPayload = objectMapper.convertValue(event, Map.class);
+            message.setRaw(rawPayload);
+        } catch (Exception e) {
+            log.warn("Error convirtiendo evento a Map para raw: {}", e.getMessage());
+        }
         
         if (event.getTimestamp() != null) {
             OffsetDateTime createdAt = OffsetDateTime.ofInstant(
@@ -111,7 +146,22 @@ public class InstagramWebhookService {
         thread.setLastMessageAt(message.getCreatedAt());
         threadRepository.save(thread);
         
-        log.info("Mensaje procesado: {} en thread {}", message.getId(), thread.getId());
+        log.info("Mensaje procesado: {} en thread {} (idempotente por external_message_id)", 
+                 message.getId(), thread.getId());
+    }
+    
+    /**
+     * TODO: Implementar búsqueda real de account por recipientId (IG_USER_ID).
+     * Por ahora retorna un UUID fijo para desarrollo/pruebas.
+     */
+    private UUID findOrCreateAccountId(String recipientId) {
+        // En producción: buscar en accounts donde external_ids->>'ig_user_id' = recipientId
+        // return accountRepository.findByChannelAndExternalIgUserId(Channel.INSTAGRAM, recipientId)
+        //        .map(Account::getId)
+        //        .orElse(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        
+        // Por ahora, retornar UUID fijo
+        return UUID.fromString("00000000-0000-0000-0000-000000000001");
     }
 }
 
