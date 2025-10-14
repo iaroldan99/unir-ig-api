@@ -2,61 +2,43 @@ package com.unir.apigateway.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.time.Duration;
 
 @Service
 public class SseService {
     
     private static final Logger log = LoggerFactory.getLogger(SseService.class);
-    private static final long SSE_TIMEOUT = 30 * 60 * 1000L; // 30 minutos
-    
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    public SseEmitter createEmitter() {
-        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
+    private final Sinks.Many<ServerSentEvent<String>> sink;
+
+    public SseService() {
+        this.sink = Sinks.many().multicast().onBackpressureBuffer();
+    }
+
+    public Flux<ServerSentEvent<String>> getEventStream() {
+        log.info("Cliente conectado al stream SSE");
         
-        emitter.onCompletion(() -> {
-            log.debug("SSE completado, removiendo emitter");
-            emitters.remove(emitter);
-        });
-        
-        emitter.onTimeout(() -> {
-            log.debug("SSE timeout, removiendo emitter");
-            emitters.remove(emitter);
-        });
-        
-        emitter.onError((e) -> {
-            log.error("Error en SSE, removiendo emitter", e);
-            emitters.remove(emitter);
-        });
-        
-        emitters.add(emitter);
-        log.info("Nuevo cliente SSE conectado. Total: {}", emitters.size());
-        
-        return emitter;
+        return sink.asFlux()
+                .mergeWith(Flux.interval(Duration.ofSeconds(30)) // Keep-alive cada 30s
+                        .map(sequence -> ServerSentEvent.<String>builder()
+                                .event("heartbeat")
+                                .data(String.valueOf(sequence))
+                                .build()));
     }
 
     public void emitEvent(String eventType, Object data) {
-        List<SseEmitter> deadEmitters = new CopyOnWriteArrayList<>();
+        String dataStr = data instanceof String ? (String) data : data.toString();
         
-        for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event()
-                        .name(eventType)
-                        .data(data));
-                log.debug("Evento {} enviado a cliente SSE", eventType);
-            } catch (IOException e) {
-                log.error("Error enviando evento SSE", e);
-                deadEmitters.add(emitter);
-            }
-        }
+        log.debug("Emitiendo evento SSE: type={}, data={}", eventType, dataStr);
         
-        emitters.removeAll(deadEmitters);
+        sink.tryEmitNext(ServerSentEvent.<String>builder()
+                .event(eventType)
+                .data(dataStr)
+                .build());
     }
 }
-
