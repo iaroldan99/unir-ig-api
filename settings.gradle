@@ -1,0 +1,6 @@
+rootProject.name = 'unir-ig-api'
+
+include 'libs:common'
+include 'ig-service'
+include 'api-gateway'
+

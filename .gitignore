@@ -1,0 +1,32 @@
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Gradle
+.gradle/
+build/
+out/
+target/
+
+# Environment
+.env
+*.log
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Spring Boot
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Test output
+*.class
+

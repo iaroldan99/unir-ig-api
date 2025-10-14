@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: unir-postgres
+    environment:
+      POSTGRES_DB: inbox
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ig-service:
+    build:
+      context: ./ig-service
+      dockerfile: Dockerfile
+    container_name: ig-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inbox
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      IG_VERIFY_TOKEN: ${IG_VERIFY_TOKEN:-demo_token}
+      IG_PAGE_ACCESS_TOKEN: ${IG_PAGE_ACCESS_TOKEN}
+      IG_USER_ID: ${IG_USER_ID}
+      IG_GRAPH_VERSION: ${IG_GRAPH_VERSION:-v21.0}
+    ports:
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inbox
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      IG_SERVICE_URL: http://ig-service:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
