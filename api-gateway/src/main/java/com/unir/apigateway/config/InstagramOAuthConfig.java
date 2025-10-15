@@ -10,11 +10,12 @@ public class InstagramOAuthConfig {
     private String clientId;
     private String clientSecret;
     private String redirectUri;
-    private String authorizationUrl = "https://api.instagram.com/oauth/authorize";
+    // Para Instagram Graph API usamos Facebook Login (no Instagram Basic Display)
+    private String authorizationUrl = "https://www.facebook.com/v24.0/dialog/oauth";
     private String tokenUrl = "https://graph.facebook.com/v24.0/oauth/access_token";
     
-    // Para Instagram Business necesitamos estos scopes
-    private String scopes = "instagram_basic,instagram_manage_messages,pages_manage_metadata,pages_read_engagement";
+    // Para Instagram Business necesitamos estos scopes de Facebook + Instagram
+    private String scopes = "pages_show_list,pages_read_engagement,pages_manage_metadata,instagram_basic,instagram_manage_messages,business_management";
 
     public String getClientId() {
         return clientId;

@@ -1,12 +1,19 @@
 package com.unir.igservice.controller;
 
-import com.unir.igservice.config.InstagramConfig;
-import com.unir.igservice.dto.InstagramWebhookPayload;
-import com.unir.igservice.service.InstagramWebhookService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unir.igservice.config.InstagramConfig;
+import com.unir.igservice.dto.InstagramWebhookPayload;
+import com.unir.igservice.service.InstagramWebhookService;
 
 @RestController
 @RequestMapping("/webhooks/instagram")
@@ -16,10 +23,12 @@ public class WebhookController {
     
     private final InstagramConfig config;
     private final InstagramWebhookService webhookService;
+    private final ObjectMapper objectMapper;
 
-    public WebhookController(InstagramConfig config, InstagramWebhookService webhookService) {
+    public WebhookController(InstagramConfig config, InstagramWebhookService webhookService, ObjectMapper objectMapper) {
         this.config = config;
         this.webhookService = webhookService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -41,7 +50,12 @@ public class WebhookController {
 
     @PostMapping
     public ResponseEntity<String> handleWebhook(@RequestBody InstagramWebhookPayload payload) {
-        log.info("Recibido webhook de Instagram: {}", payload);
+        try {
+            String payloadJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
+            log.info("📩 Webhook recibido de Instagram:\n{}", payloadJson);
+        } catch (Exception e) {
+            log.warn("No se pudo serializar el payload: {}", payload);
+        }
         
         try {
             webhookService.processWebhook(payload);

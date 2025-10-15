@@ -1,12 +1,11 @@
 package com.unir.apigateway.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unir.apigateway.config.InstagramOAuthConfig;
-import com.unir.apigateway.dto.InstagramConnectionDTO;
-import com.unir.apigateway.repository.AccountRepository;
-import com.unir.common.entity.Account;
-import com.unir.common.model.Channel;
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,11 +15,13 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unir.apigateway.config.InstagramOAuthConfig;
+import com.unir.apigateway.dto.InstagramConnectionDTO;
+import com.unir.apigateway.repository.AccountRepository;
+import com.unir.common.entity.Account;
+import com.unir.common.model.Channel;
 
 @Service
 public class InstagramOAuthService {
@@ -70,15 +71,20 @@ public class InstagramOAuthService {
         // 1. Intercambiar code por access_token
         Map<String, String> tokenResponse = exchangeCodeForToken(code);
         String accessToken = tokenResponse.get("access_token");
-        String igUserId = tokenResponse.get("user_id");
         
-        log.info("Access token obtenido para IG user_id: {}", igUserId);
+        log.info("Access token obtenido correctamente");
         
-        // 2. Obtener información del perfil de Instagram
-        Map<String, String> profileInfo = getInstagramProfile(accessToken, igUserId);
-        
-        // 3. Obtener el Instagram Business Account ID (si aplicable)
+        // 2. Obtener el Instagram Business Account ID desde las páginas de Facebook
         String businessAccountId = getBusinessAccountId(accessToken);
+        
+        if (businessAccountId == null) {
+            throw new Exception("No se encontró una cuenta de Instagram Business conectada a tu página de Facebook");
+        }
+        
+        log.info("Instagram Business Account ID obtenido: {}", businessAccountId);
+        
+        // 3. Obtener información del perfil de Instagram usando el business account ID
+        Map<String, String> profileInfo = getInstagramProfile(accessToken, businessAccountId);
         
         // 4. Buscar o crear account
         Account account = accountRepository.findByUserIdAndChannelAndStatus(userId, Channel.INSTAGRAM, "active")
@@ -90,8 +96,7 @@ public class InstagramOAuthService {
         
         // External IDs
         Map<String, String> externalIds = new HashMap<>();
-        externalIds.put("ig_user_id", businessAccountId != null ? businessAccountId : igUserId);
-        externalIds.put("user_id", igUserId);
+        externalIds.put("ig_user_id", businessAccountId);
         externalIds.put("username", profileInfo.get("username"));
         account.setExternalIds(externalIds);
         
@@ -113,6 +118,7 @@ public class InstagramOAuthService {
 
     /**
      * Intercambia el código por access token
+     * Para Facebook Login, solo devuelve access_token (no user_id)
      */
     private Map<String, String> exchangeCodeForToken(String code) throws Exception {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
@@ -129,21 +135,31 @@ public class InstagramOAuthService {
                 .bodyToMono(String.class)
                 .block();
 
+        log.debug("Token response: {}", response);
+        
         JsonNode jsonNode = objectMapper.readTree(response);
         
         Map<String, String> result = new HashMap<>();
         result.put("access_token", jsonNode.get("access_token").asText());
-        result.put("user_id", jsonNode.get("user_id").asText());
+        
+        // Facebook OAuth no devuelve user_id, lo obtenemos después
+        if (jsonNode.has("user_id")) {
+            result.put("user_id", jsonNode.get("user_id").asText());
+        }
         
         return result;
     }
 
     /**
-     * Obtiene información básica del perfil
+     * Obtiene información básica del perfil de Instagram Business
+     * Para Instagram Business, usamos Facebook Graph API
      */
-    private Map<String, String> getInstagramProfile(String accessToken, String userId) throws Exception {
-        String url = String.format("https://graph.instagram.com/%s?fields=id,username&access_token=%s", 
-                                    userId, accessToken);
+    private Map<String, String> getInstagramProfile(String accessToken, String businessAccountId) throws Exception {
+        // Para Instagram Business Account, usar Facebook Graph API
+        String url = String.format("https://graph.facebook.com/v24.0/%s?fields=id,username,name&access_token=%s", 
+                                    businessAccountId, accessToken);
+
+        log.debug("Obteniendo perfil de Instagram Business: {}", url.replace(accessToken, "***"));
 
         String response = webClient.get()
                 .uri(url)
@@ -151,11 +167,14 @@ public class InstagramOAuthService {
                 .bodyToMono(String.class)
                 .block();
 
+        log.debug("Profile response: {}", response);
+
         JsonNode jsonNode = objectMapper.readTree(response);
         
         Map<String, String> result = new HashMap<>();
         result.put("username", jsonNode.get("username").asText());
         result.put("name", jsonNode.has("name") ? jsonNode.get("name").asText() : jsonNode.get("username").asText());
+        result.put("id", jsonNode.get("id").asText());
         
         return result;
     }
